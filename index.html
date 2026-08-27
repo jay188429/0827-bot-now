@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>장소 접수 및 택시 배차 시스템</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Malgun Gothic', sans-serif; }
+        body { background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .container { width: 900px; max-width: 100%; height: 600px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; overflow: hidden; }
+        
+        /* 사이드바 탭 */
+        .sidebar { width: 250px; background: #2c3e50; color: white; display: flex; flex-direction: column; }
+        .sidebar h2 { padding: 20px; font-size: 18px; border-bottom: 1px solid #34495e; text-align: center; }
+        .tab-btn { padding: 15px 20px; background: none; border: none; color: #bdc3c7; text-align: left; font-size: 16px; cursor: pointer; transition: 0.3s; }
+        .tab-btn.active, .tab-btn:hover { background: #34495e; color: white; border-left: 4px solid #3498db; }
+
+        /* 컨텐츠 영역 */
+        .content { flex: 1; display: none; flex-direction: column; height: 100%; }
+        .content.active { display: flex; }
+        .chat-header { padding: 15px 20px; background: #ecf0f1; border-bottom: 1px solid #ddd; font-weight: bold; color: #2c3e50; }
+        
+        /* 2단계 레이아웃 분할 (챗봇 왼쪽, 연동된 장소 정보 오른쪽) */
+        .chat-layout { display: flex; flex: 1; overflow: hidden; }
+        .chat-main-area { flex: 1; display: flex; flex-direction: column; height: 100%; border-right: 1px solid #e0e0e0; }
+        .sidebar-info-panel { width: 280px; background: #f8f9fa; padding: 20px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
+        .info-card { background: white; border: 1px solid #e1e4e8; border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .info-card h3 { font-size: 15px; color: #2c3e50; margin-bottom: 10px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+        .info-item { font-size: 13px; color: #555; margin-bottom: 8px; }
+        .info-item span { font-weight: bold; color: #333; }
+        
+        /* 챗봇 영역 */
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #fafbfc; }
+        .message { max-width: 75%; padding: 12px 16px; border-radius: 10px; font-size: 14px; line-height: 1.4; }
+        .message.bot { background: #e0e0e0; color: #333; align-self: flex-start; }
+        .message.user { background: #3498db; color: white; align-self: flex-end; }
+        
+        /* 입력 영역 */
+        .chat-input-box { display: flex; padding: 15px; background: white; border-top: 1px solid #ddd; }
+        .chat-input-box input { flex: 1; padding: 10px 15px; border: 1px solid #ccc; border-radius: 6px; outline: none; font-size: 14px; }
+        .chat-input-box button { margin-left: 10px; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .chat-input-box button:hover { background: #2980b9; }
+
+        .shared-info { font-size: 12px; color: #e74c3c; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 사이드바 메뉴 -->
+    <div class="sidebar">
+        <h2>🚕 통합 예약 서비스</h2>
+        <button class="tab-btn active" onclick="switchTab(0)">1단계: 장소 접수</button>
+        <button class="tab-btn" onclick="switchTab(1)">2단계: 택시 배차</button>
+    </div>
+
+    <!-- 1단계: 장소 접수 탭 -->
+    <div class="content active" id="tab-0">
+        <div class="chat-header">
+            📍 1단계: 원하시는 장소와 조건을 말씀해주세요.
+        </div>
+        <div class="chat-messages" id="chat-box-0">
+            <div class="message bot">안녕하세요! 가고 싶으신 장소의 종류, 지역, 이름을 알려주세요. (예: 서울 서쪽에 쇼핑할 곳 추천해줘)</div>
+        </div>
+        <div class="chat-input-box">
+            <input type="text" id="input-0" placeholder="메시지를 입력하세요..." onkeypress="if(event.key === 'KeyE' || event.keyCode === 13) sendMessage(0)">
+            <button onclick="sendMessage(0)">전송</button>
+        </div>
+    </div>
+
+    <!-- 2단계: 택시 배차 탭 -->
+    <div class="content" id="tab-1">
+        <div class="chat-header">
+            🚗 2단계: 선택된 장소로 가는 택시를 호출합니다.
+        </div>
+        <div class="chat-layout">
+            <div class="chat-main-area">
+                <div class="chat-messages" id="chat-box-1">
+                    <div class="message bot">안녕하세요! 1단계에서 확정된 장소가 오른쪽에 자동으로 연동됩니다. 출발지와 출발 시간을 알려주세요.</div>
+                </div>
+                <div class="chat-input-box">
+                    <input type="text" id="input-1" placeholder="출발지와 시간을 입력하세요..." onkeypress="if(event.keyCode === 13) sendMessage(1)">
+                    <button onclick="sendMessage(1)">전송</button>
+                </div>
+            </div>
+            <div class="sidebar-info-panel">
+                <div class="info-card">
+                    <h3>📍 연동된 목적지 정보</h3>
+                    <div class="info-item">종류: <span id="info-type">-</span></div>
+                    <div class="info-item">지역: <span id="info-region">-</span></div>
+                    <div class="info-item">이름: <span id="info-name">-</span></div>
+                </div>
+                <div class="info-card" style="background: #e8f4fd; border-color: #bbeecc;">
+                    <h3 style="border-color: #2ecc71;">💡 안내</h3>
+                    <div style="font-size: 12px; color: #444; line-height: 1.4;">
+                        1단계에서 접수하신 장소 정보가 실시간으로 반영됩니다. 출발지를 입력해 택시 배차를 완료하세요!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 전역 상태 데이터 공유 객체
+    let sharedPlaceData = {
+        종류: "",
+        지역: "",
+        이름: ""
+    };
+
+    function switchTab(index) {
+        const contents = document.querySelectorAll('.content');
+        const buttons = document.querySelectorAll('.tab-btn');
+        
+        contents.forEach((c, idx) => {
+            c.classList.toggle('active', idx === index);
+        });
+        buttons.forEach((b, idx) => {
+            b.classList.toggle('active', idx === index);
+        });
+
+        // 2번 탭으로 넘어올 때 1단계 정보 동기화 갱신
+        if (index === 1) {
+            updateTaxiDestination();
+        }
+    }
+
+    function updateTaxiDestination() {
+        document.getElementById('info-type').innerText = sharedPlaceData.종류 || '미정';
+        document.getElementById('info-region').innerText = sharedPlaceData.지역 || '미정';
+        document.getElementById('info-name').innerText = sharedPlaceData.이름 || '미정';
+    }
+
+    function appendMessage(tabIdx, sender, text) {
+        const chatBox = document.getElementById(`chat-box-${tabIdx}`);
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${sender}`;
+        msgDiv.innerText = text;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function sendMessage(tabIdx) {
+        const inputField = document.getElementById(`input-${tabIdx}`);
+        const text = inputField.value.trim();
+        if (!text) return;
+
+        appendMessage(tabIdx, 'user', text);
+        inputField.value = '';
+
+        // 봇 응답 로직 시뮬레이션
+        setTimeout(() => {
+            if (tabIdx === 0) {
+                // 1단계 장소 스마트 인식 로직
+                // 1. 종류 감지 (쇼핑, 관람, 체험, 식당, 숙소 등)
+                if (text.includes("쇼핑")) sharedPlaceData.종류 = "쇼핑";
+                else if (text.includes("관람")) sharedPlaceData.종류 = "관람";
+                else if (text.includes("체험")) sharedPlaceData.종류 = "체험";
+                else if (text.includes("식당") || text.includes("맛집") || text.includes("음식")) sharedPlaceData.종류 = "식당";
+                else if (text.includes("숙소") || text.includes("호텔") || text.includes("펜션")) sharedPlaceData.종류 = "숙소";
+                else if (!sharedPlaceData.종류) sharedPlaceData.종류 = "일반 장소";
+
+                // 2. 지역 감지 (서울, 부산, 제주, 인천, 대구, 광주, 대전, 울산, 경기, 강원 등 및 동서남북 키워드)
+                const regions = ["서울", "부산", "제주", "인천", "대구", "광주", "대전", "울산", "경기", "강원", "충청", "전라", "경상", "서쪽", "동쪽", "남쪽", "북쪽", "도심", "시내"];
+                for (let reg of regions) {
+                    if (text.includes(reg)) {
+                        sharedPlaceData.지역 = reg.includes("서울") || reg.includes("부산") || reg.includes("제주") || reg.includes("인천") || reg.includes("대구") || reg.includes("광주") || reg.includes("대전") || reg.includes("울산") || reg.includes("경기") || reg.includes("강원") || reg.includes("충청") || reg.includes("전라") || reg.includes("경상") ? reg : (sharedPlaceData.지역 ? sharedPlaceData.지역 + " " + reg : reg);
+                    }
+                }
+
+                // 3. 이름 감지 (사용자가 입력한 내용 중 명사적 표현이나 특정 장소명)
+                // 만약 종류나 지역 외에 구체적인 명칭을 언급했거나 문장 전체가 이름/목적일 경우 반영
+                if (text.length >= 2 && !text.includes("추천") && !text.includes("알려줘")) {
+                    sharedPlaceData.이름 = text;
+                }
+
+                let reply = `[장소 접수 중]\n- 종류: ${sharedPlaceData.종류 || '미정'}\n- 지역: ${sharedPlaceData.지역 || '미정'}\n- 이름: ${sharedPlaceData.이름 || '미정'}\n`;
+                if (sharedPlaceData.종류 && sharedPlaceData.지역 && sharedPlaceData.이름) {
+                    reply += "🎉 장소가 완전히 접수되었습니다! 상단 메뉴의 '2단계: 택시 배차'로 이동해주세요.";
+                } else {
+                    reply += "나머지 필요한 정보(종류/지역/이름)를 마저 알려주세요.";
+                }
+                appendMessage(0, 'bot', reply);
+            } else {
+                // 2단계 택시 배차 봇 (개선된 확실한 인식 로직)
+                const dest = sharedPlaceData.이름 || sharedPlaceData.지역 || "선택된 장소";
+                
+                // 사용자가 입력한 텍스트에서 출발지 및 시간 정보 확실하게 파악
+                let departure = "";
+                let timeInfo = "즉시 출발";
+
+                // 시간 관련 키워드 감지
+                if (text.includes("시") || text.includes("분") || text.includes("후") || text.includes("지금") || text.includes("바로")) {
+                    // 시간 표현 추출 시뮬레이션
+                    timeInfo = text;
+                }
+
+                // 출발지 판별: 사용자가 입력한 내용 전체 또는 '에서' 앞부분 등을 출발지로 인정
+                if (text.length > 0) {
+                    departure = text;
+                }
+
+                if (departure) {
+                    appendMessage(1, 'bot', `🎉 [택시 배차 확정 완료]\n-----------------------------\n📍 출발지: ${departure}\n🏁 목적지: ${dest}\n⏰ 배차 시간: ${timeInfo}\n-----------------------------\n성공적으로 택시가 배차되었습니다! 안전하게 이동하세요.`);
+                } else {
+                    appendMessage(1, 'bot', `현재 목적지는 [${dest}]입니다. 어디서 출발하시나요? 출발하실 곳을 입력해 주세요.`);
+                }
+            }
+        }, 500);
+    }
+</script>
+
+</body>
+</html>

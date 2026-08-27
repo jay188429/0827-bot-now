@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>장소 접수 및 택시 배차 시스템</title>
@@ -102,6 +103,41 @@
 </div>
 
 <script>
+      // 💡 여기에 본인의 Supabase URL과 Key를 넣어주세요!
+    const SUPABASE_URL = 'https://본인프로젝트ID.supabase.co';
+    const SUPABASE_ANON_KEY = '본인의_ANON_PUBLIC_키';
+
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Supabase에 데이터 저장하는 함수
+    if (departure) {
+    // 🚀 Supabase에 데이터 저장 실행!
+    saveBookingToSupabase(departure, timeInfo);
+
+    appendMessage(1, 'bot', `🎉 [택시 배차 확정 완료]\n-----------------------------\n📍 출발지: ${departure}\n🏁 목적지: ${dest}\n⏰ 배차 시간: ${timeInfo}\n-----------------------------\n성공적으로 택시가 배차되고 Supabase DB에 저장되었습니다!`);
+}
+    async function saveBookingToSupabase(departureText, timeText) {
+        const { data, error } = await supabaseClient
+            .from('reservations')
+            .insert([
+                {
+                    place_type: sharedPlaceData.종류 || '미정',
+                    place_region: sharedPlaceData.지역 || '미정',
+                    place_name: sharedPlaceData.이름 || '미정',
+                    departure: departureText,
+                    time: timeText
+                }
+            ]);
+
+        if (error) {
+            console.error('Supabase 저장 실패:', error);
+        } else {
+            console.log('Supabase 저장 성공!', data);
+        }
+    }
+
+    // ... (기존에 있던 switchTab, sendMessage 등의 함수들) ...
     // 전역 상태 데이터 공유 객체
     let sharedPlaceData = {
         종류: "",

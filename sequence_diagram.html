@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시퀀스 흐름도 (Mermaid)</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</head>
+<body style="font-family:sans-serif; background:#f4f6f9; padding:20px; display:flex; flex-direction:column; align-items:center;">
+    <h1>장소 추천 및 택시 배차 시퀀스 다이어그램</h1>
+    <div class="mermaid">
+sequenceDiagram
+    autonumber
+
+    actor U as 사용자
+    participant B as 어시스턴트
+    participant CTX as Context<br/>현재 요청
+    participant MEM as Memory<br/>장기 정보
+    participant P as 장소 서비스
+    participant T as 택시 서비스
+    actor CC as 콜센터
+
+    Note over U,CC: 장소 추천부터 택시 호출까지
+
+    rect rgba(255,255,255,0.92)
+        U->>B: "퇴근 후 갈 만한 조용한 장소를 찾아줘"
+        activate B
+
+        B->>CTX: 새 요청 생성
+        activate CTX
+        CTX->>MEM: 사용자 선호 조회
+        activate MEM
+        MEM-->>CTX: 조용한 장소<br/>최근 방문 지역
+        deactivate MEM
+
+        CTX->>P: 장소 검색 조건 전달
+        activate P
+        P-->>CTX: 추천 장소 후보 반환
+        deactivate P
+        CTX-->>B: 추천 결과와 현재 상태 전달
+        deactivate CTX
+
+        B-->>U: 추천 장소 3곳 안내
+        U->>B: "두 번째 장소를 선택할게"
+
+        B->>CTX: 선택 장소 확정
+        CTX-->>B: 장소명·주소·좌표 반환
+        B-->>U: "장소를 저장했어요"
+    end
+
+    rect rgba(245,245,247,0.95)
+        U->>B: "지금 거기로 택시를 불러줘"
+
+        B->>CTX: 직전 장소 Context 조회
+        CTX-->>B: 목적지 정보 반환
+
+        B->>MEM: 선호 차종·결제수단 조회
+        MEM-->>B: 일반 차종·등록 결제수단
+
+        B-->>U: "현재 위치에서 바로 호출할까요?"
+        U->>B: "네, 호출해줘"
+
+        B->>CTX: 출발지·목적지·호출 방식 확정
+        CTX-->>B: 택시 요청 정보 반환
+
+        B->>T: 택시 호출 요청
+        activate T
+
+        alt 기사 배차 성공
+            T-->>B: 기사·차량·예상 도착시간
+            B-->>U: "배차가 완료됐어요"
+        else 기사 배차 지연
+            T-->>B: 주변 기사 부족
+            B-->>U: "조금 더 기다리거나 다시 호출할까요?"
+            U->>B: "다시 호출해줘"
+            B->>T: 재배차 요청
+            T-->>B: 배차 결과 반환
+        end
+
+        deactivate T
+        deactivate B
+    end
+
+    rect rgba(39,39,41,0.96)
+        Note over B,MEM: Context와 Memory의 저장 범위
+
+        B->>CTX: 현재 요청 상태 갱신
+        Note right of CTX: 이번 대화에서 유지<br/>장소·출발지·목적지·배차 상태
+
+        opt 이용 결과 저장에 동의
+            B->>MEM: 선택 장소·택시 이용 이력 저장
+            MEM-->>B: 다음 요청에 활용 가능
+        end
+    end
+
+    opt 콜센터 지원
+        CC->>B: 사용자 요청 상태 확인
+        B-->>CC: 현재 Context와 배차 상태 제공
+        CC->>T: 배차 상태 조회
+        T-->>CC: 현재 기사·차량 상태
+        CC-->>U: 진행 상황 안내
+    end
+    </div>
+</body>
+</html>

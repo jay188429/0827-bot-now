@@ -18,6 +18,9 @@
       <a href="index.html" class="text-blue-600 font-semibold">홈</a>
       <a href="main.index.html" class="text-slate-600 hover:text-slate-900 transition">챗봇 서비스</a>
       <a href="flow-diagram.html" class="text-slate-600 hover:text-slate-900 transition" target="_blank">시퀀스 흐름도</a>
+            <div id="auth-header-0" style="font-size: 13px; font-weight: normal;">
+                <button onclick="loginWithGoogle()" style="padding: 4px 10px; background: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">구글로 로그인</button>
+            </div>   
     </nav>
   </header>
 
@@ -143,7 +146,7 @@
           <div class="sm:col-span-2 flex flex-col sm:flex-row gap-3 sm:justify-end">
             <button type="button" id="btnMockRecommend"
               class="px-5 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition">
-              추천(데모)
+              추천
             </button>
             <button type="submit"
               class="px-5 py-3 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition">
@@ -229,7 +232,7 @@
           <p class="text-sm font-bold text-slate-900">접수 완료(프론트 데모)</p>
           <p id="taxiResultText" class="mt-1 text-sm text-slate-700"></p>
           <p class="mt-2 text-xs text-slate-500">
-            실제 배차(기사 수락/지연/재호출) 로직은 서버/외부 API와 연동 시 구현합니다. 
+
           </p>
         </div>
       </div>
@@ -288,22 +291,22 @@
       </div>
     </section>
 
-    <!-- 기존 배너 (기존 유지) -->
+    <!-- 기존 배너 (기존 유지) 
     <div class="bg-blue-600 text-white rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-lg">
       <div>
         <h4 class="text-lg font-bold">지금 바로 예약 서비스를 체험해 보세요!</h4>
         <p class="text-blue-100 text-sm">장소 접수부터 택시 배차까지 원스톱으로 처리됩니다.</p>
       </div>
-      <a href="main.index.html" class="bg-white text-blue-600 font-bold px-6 py-3 rounded-xl shadow hover:bg-blue-50 transition text-sm whitespace-nowrap">
+      <a href="index.html" class="bg-white text-blue-600 font-bold px-6 py-3 rounded-xl shadow hover:bg-blue-50 transition text-sm whitespace-nowrap">
         챗봇 열기
       </a>
-    </div>
+    </div> -->
 
   </main>
 
   <!-- Footer (기존 유지) -->
   <footer class="w-full max-w-4xl text-center text-xs text-slate-500 py-4 border-t border-slate-200">
-    <p>&copy; 통합 예약 서비스 Hub</p>
+    <p>&copy;🚕 한번에 택시</p>
   </footer>
 
   <script>

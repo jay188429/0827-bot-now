@@ -1,144 +1,334 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>장소 접수 및 택시 배차 시스템</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Malgun Gothic', sans-serif; }
-        body { background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .container { width: 900px; max-width: 100%; height: 600px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; overflow: hidden; }
-        
-        /* 사이드바 탭 */
-        .sidebar { width: 250px; background: #2c3e50; color: white; display: flex; flex-direction: column; }
-        .sidebar h2 { padding: 20px; font-size: 18px; border-bottom: 1px solid #34495e; text-align: center; }
-        .tab-btn { padding: 15px 20px; background: none; border: none; color: #bdc3c7; text-align: left; font-size: 16px; cursor: pointer; transition: 0.3s; }
-        .tab-btn.active, .tab-btn:hover { background: #34495e; color: white; border-left: 4px solid #3498db; }
-
-        /* 컨텐츠 영역 */
-        .content { flex: 1; display: none; flex-direction: column; height: 100%; }
-        .content.active { display: flex; }
-        .chat-header { padding: 15px 20px; background: #ecf0f1; border-bottom: 1px solid #ddd; font-weight: bold; color: #2c3e50; }
-        
-        /* 2단계 레이아웃 분할 */
-        .chat-layout { display: flex; flex: 1; overflow: hidden; }
-        .chat-main-area { flex: 1; display: flex; flex-direction: column; height: 100%; border-right: 1px solid #e0e0e0; }
-        .sidebar-info-panel { width: 280px; background: #f8f9fa; padding: 20px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
-        .info-card { background: white; border: 1px solid #e1e4e8; border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .info-card h3 { font-size: 15px; color: #2c3e50; margin-bottom: 10px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
-        .info-item { font-size: 13px; color: #555; margin-bottom: 8px; }
-        .info-item span { font-weight: bold; color: #333; }
-        
-        /* 챗봇 영역 */
-        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #fafbfc; }
-        .message { max-width: 75%; padding: 12px 16px; border-radius: 10px; font-size: 14px; line-height: 1.4; }
-        .message.bot { background: #e0e0e0; color: #333; align-self: flex-start; }
-        .message.user { background: #3498db; color: white; align-self: flex-end; }
-        
-        /* 입력 영역 */
-        .chat-input-box { display: flex; padding: 15px; background: white; border-top: 1px solid #ddd; gap: 10px; }
-        .chat-input-box input { flex: 1; padding: 10px 15px; border: 1px solid #ccc; border-radius: 6px; outline: none; font-size: 14px; }
-        .chat-input-box button { padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; white-space: nowrap; }
-        .chat-input-box button:hover { background: #2980b9; }
-        .mic-btn { background: #e74c3c !important; }
-        .mic-btn.listening { background: #c0392b !important; animation: pulse 1.5s infinite; }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>메인 서비스 허브 - 통합 예약 서비스</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
 
-<div class="container">
-    <div class="sidebar">
-        <h2>🚕 통합 예약 서비스</h2>
-        <button class="tab-btn active" onclick="switchTab(0)">1단계: 장소 접수</button>
-        <button class="tab-btn" onclick="switchTab(1)">2단계: 택시 배차</button>
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col items-center justify-between p-6">
+
+  <!-- Top Navigation (기존 유지) -->
+  <header class="w-full max-w-4xl flex justify-between items-center py-4 border-b border-slate-200">
+    <h1 class="text-xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+      <span>🚕</span> 통합 예약 허브
+    </h1>
+    <nav class="flex gap-4 items-center text-sm font-medium">
+      <a href="index.html" class="text-blue-600 font-semibold">홈</a>
+      <a href="main.index.html" class="text-slate-600 hover:text-slate-900 transition">챗봇 서비스</a>
+      <a href="flow-diagram.html" class="text-slate-600 hover:text-slate-900 transition" target="_blank">시퀀스 흐름도</a>
+    </nav>
+  </header>
+
+  <!-- Main Content Hub (기존 유지 + 아래에 토글 폼 섹션 추가) -->
+  <main class="w-full max-w-4xl my-auto py-8 flex flex-col gap-8">
+
+    <!-- 소개 영역 (기존 유지) -->
+    <div class="text-center space-y-3">
+      <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+        어디로 갈까요? 원하시는 서비스를 선택하세요
+      </h2>
+      <p class="text-slate-600 text-base sm:text-lg">
+        버튼 클릭 한 번으로 장소 추천부터 택시 호출까지 간편하게 이용하세요.
+      </p>
     </div>
 
-    <!-- 1단계: 장소 접수 탭 -->
-    <div class="content active" id="tab-0">
-        <div class="chat-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>📍 1단계: 원하시는 장소와 조건을 말씀해주세요.</span>
-            <div id="auth-header-0" style="font-size: 13px; font-weight: normal;">
-                <button onclick="loginWithGoogle()" style="padding: 4px 10px; background: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">구글 로그인</button>
-            </div>
+    <!-- 기존 카드 그리드 (기존 유지) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <a href="main.index.html" class="group bg-white rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md border border-slate-200 transition flex flex-col justify-between">
+        <div>
+          <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 font-bold text-xl mb-4 group-hover:bg-blue-600 group-hover:text-white transition">
+            💬
+          </div>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">AI 챗봇과 대화하기</h3>
+          <p class="text-slate-600 text-sm leading-relaxed">
+            자연어로 편하게 말씀하세요. AI가 장소를 추천하고 택시 배차까지 완벽하게 연동해 드립니다. (음성 인식 지원)
+          </p>
         </div>
-        <div class="chat-messages" id="chat-box-0">
-            <div class="message bot">안녕하세요! 가고 싶으신 장소의 종류, 지역, 이름을 알려주세요. (예: 서울 서쪽에 쇼핑할 곳 추천해줘)</div>
+        <div class="mt-6 flex items-center text-blue-600 font-semibold text-sm gap-1 group-hover:translate-x-1 transition">
+          챗봇 시작하기 &rarr;
         </div>
-        <div class="chat-input-box">
-            <input type="text" id="input-0" placeholder="메시지를 입력하세요..." onkeypress="if(event.keyCode === 13) sendMessage(0)">
-            <button class="mic-btn" onclick="toggleSpeechRecognition(0)" title="음성 인식">🎤 음성입력</button>
-            <button onclick="sendMessage(0)">전송</button>
+      </a>
+
+      <a href="flow-diagram.html" target="_blank" class="group bg-white rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-md border border-slate-200 transition flex flex-col justify-between">
+        <div>
+          <div class="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-700 font-bold text-xl mb-4 group-hover:bg-slate-900 group-hover:text-white transition">
+            📊
+          </div>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">서비스 시퀀스 흐름도</h3>
+          <p class="text-slate-600 text-sm leading-relaxed">
+            사용자, 어시스턴트, Context, Memory, 외부 서비스 간의 상호작용 흐름을 다이어그램으로 확인합니다.
+          </p>
         </div>
+        <div class="mt-6 flex items-center text-slate-900 font-semibold text-sm gap-1 group-hover:translate-x-1 transition">
+          흐름도 보기 (새창) &rarr;
+        </div>
+      </a>
     </div>
 
-    <!-- 2단계: 택시 배차 탭 -->
-    <div class="content" id="tab-1">
-        <div class="chat-header" style="display: flex; justify-content: space-between; align-items: center;">
-            <span>🚗 2단계: 선택된 장소로 가는 택시를 호출합니다.</span>
-            <div id="auth-header-1" style="font-size: 13px; font-weight: normal;">
-                <button onclick="loginWithGoogle()" style="padding: 4px 10px; background: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">구글 로그인</button>
-            </div>
+    <!-- ✅ 추가: 토글(탭) 방식의 접수/예약 폼 -->
+    <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div>
+          <h3 class="text-xl font-extrabold text-slate-900">장소 · 택시 · 예약 접수</h3>
+          <p class="text-slate-600 text-sm mt-1">
+            흐름도 기준으로, 장소 선택 → 택시 호출에 목적지 자동 반영까지 한 번에 처리합니다.
+          </p>
         </div>
-        <div class="chat-layout">
-            <div class="chat-main-area">
-                <div class="chat-messages" id="chat-box-1">
-                    <div class="message bot">안녕하세요! 1단계에서 확정된 장소가 오른쪽에 자동으로 연동됩니다. 출발지와 출발 시간을 알려주세요.</div>
-                </div>
-                <div class="chat-input-box">
-                    <input type="text" id="input-1" placeholder="출발지와 시간을 입력하세요..." onkeypress="if(event.keyCode === 13) sendMessage(1)">
-                    <button class="mic-btn" onclick="toggleSpeechRecognition(1)" title="음성 인식">🎤 음성입력</button>
-                    <button onclick="sendMessage(1)">전송</button>
-                </div>
-            </div>
-            <div class="sidebar-info-panel">
-                <div class="info-card">
-                    <h3>📍 연동된 목적지 정보</h3>
-                    <div class="info-item">종류: <span id="info-type">-</span></div>
-                    <div class="info-item">지역: <span id="info-region">-</span></div>
-                    <div class="info-item">이름: <span id="info-name">-</span></div>
-                </div>
-                <div class="info-card" style="background: #e8f4fd; border-color: #bbeecc;">
-                    <h3 style="border-color: #2ecc71;">💡 안내</h3>
-                    <div style="font-size: 12px; color: #444; line-height: 1.4;">
-                        1단계에서 접수하신 장소 정보가 실시간으로 반영됩니다. 출발지를 입력해 택시 배차를 완료하세요!
-                    </div>
-                </div>
-            </div>
+
+        <div class="flex gap-2">
+          <button type="button" data-tab="place"
+            class="tab-btn px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 bg-blue-600 text-white shadow-sm">
+            📍 장소
+          </button>
+          <button type="button" data-tab="taxi"
+            class="tab-btn px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">
+            🚕 택시 접수
+          </button>
+          <button type="button" data-tab="reserve"
+            class="tab-btn px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">
+            🗓️ 예약
+          </button>
         </div>
+      </div>
+
+      <!-- 상태/가이드 -->
+      <div class="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-4">
+        <div class="text-sm text-slate-700">
+          <span class="font-bold text-slate-900">현재 선택된 장소:</span>
+          <span id="selectedPlaceText" class="ml-1 text-slate-700">없음</span>
+        </div>
+        <div class="text-xs text-slate-500">
+          팁: 장소를 “확정”하면 택시 접수의 목적지에 자동 입력됩니다.
+        </div>
+      </div>
+
+      <!-- 📍 장소 폼 -->
+      <div id="tab-place" class="tab-panel mt-6">
+        <form id="placeForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <label class="text-sm font-bold text-slate-900">요청 문장</label>
+            <input id="placeQuery" type="text" placeholder="예: 퇴근 후 갈 만한 조용한 장소 추천해줘"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
+            <p class="mt-2 text-xs text-slate-500">
+              흐름도 전반부처럼 “장소 추천 요청 생성 → 추천 결과 안내 → 2번째 장소 선택” 흐름을 폼으로 축약한 버전입니다.
+            </p>
+          </div>
+
+          <div>
+            <label class="text-sm font-bold text-slate-900">지역(선택)</label>
+            <input id="placeArea" type="text" placeholder="예: 강남 / 홍대 / 판교"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
+          </div>
+
+          <div>
+            <label class="text-sm font-bold text-slate-900">분위기/키워드(선택)</label>
+            <input id="placeMood" type="text" placeholder="예: 조용한, 뷰 좋은, 혼밥, 카페"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
+          </div>
+
+          <div class="sm:col-span-2">
+            <label class="text-sm font-bold text-slate-900">선택한 장소(확정용)</label>
+            <div class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <input id="placeName" type="text" placeholder="장소명"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
+              <input id="placeAddress" type="text" placeholder="주소"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
+              <input id="placeCoord" type="text" placeholder="좌표(선택) 예: 37.5, 127.0"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
+            </div>
+          </div>
+
+          <div class="sm:col-span-2 flex flex-col sm:flex-row gap-3 sm:justify-end">
+            <button type="button" id="btnMockRecommend"
+              class="px-5 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition">
+              추천(데모)
+            </button>
+            <button type="submit"
+              class="px-5 py-3 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition">
+              선택 장소 확정
+            </button>
+          </div>
+        </form>
+
+        <div id="placeDemoResult" class="mt-4 hidden bg-white border border-slate-200 rounded-2xl p-4">
+          <p class="text-sm font-bold text-slate-900">추천 결과(데모)</p>
+          <ol class="mt-2 text-sm text-slate-700 list-decimal pl-5 space-y-1">
+            <li>북카페 A (조용함)</li>
+            <li>리버뷰 라운지 B (야경)</li>
+            <li>한적한 산책로 C (자연)</li>
+          </ol>
+          <p class="mt-2 text-xs text-slate-500">예시: “두 번째 장소 선택”을 가정해 자동 채움 버튼을 눌러보세요.</p>
+          <button type="button" id="btnPickSecond"
+            class="mt-3 px-4 py-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-100 text-sm font-bold hover:bg-blue-100 transition">
+            2번째 장소 자동 입력
+          </button>
+        </div>
+      </div>
+
+      <!-- 🚕 택시 접수 폼 -->
+      <div id="tab-taxi" class="tab-panel mt-6 hidden">
+        <form id="taxiForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <label class="text-sm font-bold text-slate-900">호출 방식</label>
+            <select id="taxiMode"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100">
+              <option value="now">지금 호출</option>
+              <option value="reserve">예약 호출</option>
+            </select>
+            <p class="mt-2 text-xs text-slate-500">
+              흐름도에서 “현재 위치에서 바로 호출할까요?” → “출발지·목적지·호출 방식 확정” 단계를 반영했습니다. 
+            </p>
+          </div>
+
+          <div>
+            <label class="text-sm font-bold text-slate-900">출발지</label>
+            <input id="pickup" type="text" placeholder="예: 현재 위치 / 충무로역"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
+          </div>
+
+          <div>
+            <label class="text-sm font-bold text-slate-900">목적지</label>
+            <input id="dropoff" type="text" placeholder="장소에서 선택한 목적지가 자동 반영됩니다"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
+          </div>
+
+          <div>
+            <label class="text-sm font-bold text-slate-900">희망 출발 시간(선택)</label>
+            <input id="departAt" type="time"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
+          </div>
+
+          <div>
+            <label class="text-sm font-bold text-slate-900">택시 종류(선택)</label>
+            <select id="carType"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100">
+              <option value="dontcare">상관없음</option>
+              <option value="normal">일반</option>
+              <option value="deluxe">고급</option>
+              <option value="eco">에코</option>
+            </select>
+          </div>
+
+          <div class="sm:col-span-2">
+            <label class="text-sm font-bold text-slate-900">요청사항(선택)</label>
+            <input id="taxiNote" type="text" placeholder="예: 캐리어 있음 / 조용히 가주세요"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
+          </div>
+
+          <div class="sm:col-span-2 flex justify-end">
+            <button type="submit"
+              class="px-5 py-3 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition">
+              택시 접수하기
+            </button>
+          </div>
+        </form>
+
+        <div id="taxiResult" class="mt-4 hidden bg-blue-50 border border-blue-100 rounded-2xl p-4">
+          <p class="text-sm font-bold text-slate-900">접수 완료(프론트 데모)</p>
+          <p id="taxiResultText" class="mt-1 text-sm text-slate-700"></p>
+          <p class="mt-2 text-xs text-slate-500">
+            실제 배차(기사 수락/지연/재호출) 로직은 서버/외부 API와 연동 시 구현합니다. 
+          </p>
+        </div>
+      </div>
+
+      <!-- 🗓️ 예약 폼 (간단 접수) -->
+      <div id="tab-reserve" class="tab-panel mt-6 hidden">
+        <form id="reserveForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <label class="text-sm font-bold text-slate-900">예약 대상</label>
+            <input id="reserveTarget" type="text" placeholder="예: (선택 장소) 리버뷰 라운지 B"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
+          </div>
+
+          <div>
+            <label class="text-sm font-bold text-slate-900">예약 날짜</label>
+            <input id="reserveDate" type="date"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
+          </div>
+
+          <div>
+            <label class="text-sm font-bold text-slate-900">예약 시간</label>
+            <input id="reserveTime" type="time"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
+          </div>
+
+          <div>
+            <label class="text-sm font-bold text-slate-900">인원</label>
+            <input id="reservePeople" type="number" min="1" value="1"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
+          </div>
+
+          <div>
+            <label class="text-sm font-bold text-slate-900">연락처(선택)</label>
+            <input id="reservePhone" type="tel" placeholder="예: 010-1234-5678"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
+          </div>
+
+          <div class="sm:col-span-2">
+            <label class="text-sm font-bold text-slate-900">요청사항(선택)</label>
+            <input id="reserveNote" type="text" placeholder="예: 창가 자리 / 유아 의자"
+              class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
+          </div>
+
+          <div class="sm:col-span-2 flex justify-end">
+            <button type="submit"
+              class="px-5 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-slate-800 transition">
+              예약 접수하기
+            </button>
+          </div>
+        </form>
+
+        <div id="reserveResult" class="mt-4 hidden bg-slate-50 border border-slate-200 rounded-2xl p-4">
+          <p class="text-sm font-bold text-slate-900">예약 접수 완료(프론트 데모)</p>
+          <p id="reserveResultText" class="mt-1 text-sm text-slate-700"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 기존 배너 (기존 유지) -->
+    <div class="bg-blue-600 text-white rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-center gap-4 shadow-lg">
+      <div>
+        <h4 class="text-lg font-bold">지금 바로 예약 서비스를 체험해 보세요!</h4>
+        <p class="text-blue-100 text-sm">장소 접수부터 택시 배차까지 원스톱으로 처리됩니다.</p>
+      </div>
+      <a href="main.index.html" class="bg-white text-blue-600 font-bold px-6 py-3 rounded-xl shadow hover:bg-blue-50 transition text-sm whitespace-nowrap">
+        챗봇 열기
+      </a>
     </div>
-</div>
 
-<script>
-    // 💡 Supabase 설정 (login.html에 있던 올바른 정보 적용)
-    const SUPABASE_URL = 'https://kxncijvjruixwiqpnnwo.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4bmNpanZqcnVpeHdpcXBubndvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NTQzMDksImV4cCI6MjEwMzQzMDMwOX0.V6Y6rYo5g6y7PqKYSRTpLcNC8BnGg_HMCZV2UC7d104';
+  </main>
 
-    const { createClient } = supabase;
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <!-- Footer (기존 유지) -->
+  <footer class="w-full max-w-4xl text-center text-xs text-slate-500 py-4 border-t border-slate-200">
+    <p>&copy; 통합 예약 서비스 Hub</p>
+  </footer>
 
-    // 페이지 로드 시 세션 확인 및 인증 상태 리스너 등록
-    window.onload = async () => {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) {
-            updateAuthUI(session.user);
-        }
-
-        supabaseClient.auth.onAuthStateChange((event, session) => {
-            if (session) {
-                updateAuthUI(session.user);
-            } else {
-                resetAuthUI();
-            }
-        });
+  <script>
+    // ---- 탭/토글 로직 ----
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    const tabPanels = {
+      place: document.getElementById("tab-place"),
+      taxi: document.getElementById("tab-taxi"),
+      reserve: document.getElementById("tab-reserve"),
     };
 
-    // Google 로그인 함수
+    function activateTab(name) {
+      Object.keys(tabPanels).forEach(k => tabPanels[k].classList.add("hidden"));
+      tabPanels[name].classList.remove("hidden");
+
+      tabButtons.forEach(btn => {
+        const active = btn.dataset.tab === name;
+        btn.className =
+          "tab-btn px-4 py-2 rounded-xl text-sm font-bold border border-slate-200 shadow-sm transition " +
+          (active
+            ? "bg-blue-600 text-white"
+            : "bg-white text-slate-700 hover:bg-slate-50");
+      });
+    }
+// Google 로그인 함수
     async function loginWithGoogle() {
         const { error } = await supabaseClient.auth.signInWithOAuth({
             provider: 'google',
@@ -179,246 +369,96 @@
         document.getElementById('auth-header-0').innerHTML = html;
         document.getElementById('auth-header-1').innerHTML = html;
     }
+    tabButtons.forEach(btn => btn.addEventListener("click", () => activateTab(btn.dataset.tab)));
 
-    // 🎤 음성 인식 (Speech Recognition) 기능
-    let recognition = null;
-    function toggleSpeechRecognition(tabIdx) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert("현재 브라우저는 음성 인식을 지원하지 않습니다. (Chrome 브라우저를 이용해주세요)");
-            return;
-        }
+    // ---- 선택 장소 상태(간단 Context 역할) ----
+    const selectedPlaceText = document.getElementById("selectedPlaceText");
+    const dropoff = document.getElementById("dropoff");
+    const reserveTarget = document.getElementById("reserveTarget");
 
-        if (!recognition) {
-            recognition = new SpeechRecognition();
-            recognition.lang = 'ko-KR';
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
+    let selectedPlace = null; // {name, address, coord}
 
-            recognition.onresult = (event) => {
-                const speechResult = event.results[0][0].transcript;
-                document.getElementById(`input-${tabIdx}`).value = speechResult;
-                sendMessage(tabIdx);
-            };
+    function setSelectedPlace(place) {
+      selectedPlace = place;
+      const label = place?.name
+        ? `${place.name}${place.address ? " · " + place.address : ""}`
+        : "없음";
+      selectedPlaceText.textContent = label;
 
-            recognition.onerror = (event) => {
-                console.error("음성 인식 오류:", event.error);
-                alert("음성 인식 중 오류가 발생했습니다: " + event.error);
-            };
-        }
-
-        try {
-            recognition.start();
-        } catch (e) {
-            console.log("이미 음성 인식이 실행 중입니다.");
-        }
+      // 흐름도: "직전 장소를 목적지로 조회"를 UI에서는 자동 반영으로 표현 
+      if (place?.name) {
+        dropoff.value = place.address ? `${place.name} (${place.address})` : place.name;
+        if (!reserveTarget.value) reserveTarget.value = place.name;
+      }
     }
 
-    // Supabase에 예약/배차 데이터 저장하는 함수
-    async function saveBookingToSupabase(departureText, timeText) {
-        const { data, error } = await supabaseClient
-            .from('reservations')
-            .insert([
-                {
-                    place_type: sharedPlaceData.종류 || '미정',
-                    place_region: sharedPlaceData.지역 || '미정',
-                    place_name: sharedPlaceData.이름 || '미정',
-                    departure: departureText,
-                    time: timeText
-                }
-            ]);
+    // ---- 장소 추천 데모 ----
+    const placeDemoResult = document.getElementById("placeDemoResult");
+    document.getElementById("btnMockRecommend").addEventListener("click", () => {
+      placeDemoResult.classList.remove("hidden");
+    });
 
-        if (error) {
-            console.error('Supabase 저장 실패:', error);
-        } else {
-            console.log('Supabase 저장 성공!', data);
-        }
-    }
+    document.getElementById("btnPickSecond").addEventListener("click", () => {
+      document.getElementById("placeName").value = "리버뷰 라운지 B";
+      document.getElementById("placeAddress").value = "서울시 어딘가 123";
+      document.getElementById("placeCoord").value = "37.50, 127.02";
+    });
 
-    // 전역 상태 데이터 공유 객체 (Context / Memory 모사)
-    let sharedPlaceData = {
-        종류: "",
-        지역: "",
-        이름: "",
-        출발지: "",
-        시간: "즉시 출발",
-        차종: "일반 택시"
-    };
+    // ---- 폼 제출(프론트 데모) ----
+    document.getElementById("placeForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("placeName").value.trim();
+      const address = document.getElementById("placeAddress").value.trim();
+      const coord = document.getElementById("placeCoord").value.trim();
 
-    function switchTab(index) {
-        const contents = document.querySelectorAll('.content');
-        const buttons = document.querySelectorAll('.tab-btn');
-        
-        contents.forEach((c, idx) => {
-            c.classList.toggle('active', idx === index);
-        });
-        buttons.forEach((b, idx) => {
-            b.classList.toggle('active', idx === index);
-        });
+      if (!name) {
+        alert("선택한 장소(장소명)를 입력해 주세요.");
+        return;
+      }
+      setSelectedPlace({ name, address, coord });
+      activateTab("taxi"); // 다음 단계로 자연스럽게 이동
+    });
 
-        if (index === 1) {
-            updateTaxiDestination();
-        }
-    }
+    const taxiResult = document.getElementById("taxiResult");
+    const taxiResultText = document.getElementById("taxiResultText");
+    document.getElementById("taxiForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const pickup = document.getElementById("pickup").value.trim();
+      const drop = document.getElementById("dropoff").value.trim();
+      const mode = document.getElementById("taxiMode").value;
+      const time = document.getElementById("departAt").value;
 
-    function updateTaxiDestination() {
-        document.getElementById('info-type').innerText = sharedPlaceData.종류 || '미정';
-        document.getElementById('info-region').innerText = sharedPlaceData.지역 || '미정';
-        document.getElementById('info-name').innerText = sharedPlaceData.이름 || '미정';
-    }
+      if (!pickup || !drop) {
+        alert("출발지와 목적지를 입력해 주세요.");
+        return;
+      }
 
-    function appendMessage(tabIdx, sender, text) {
-        const chatBox = document.getElementById(`chat-box-${tabIdx}`);
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `message ${sender}`;
-        msgDiv.innerText = text;
-        chatBox.appendChild(msgDiv);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
+      taxiResult.classList.remove("hidden");
+      taxiResultText.textContent =
+        `호출 방식: ${mode === "now" ? "지금 호출" : "예약 호출"} · 출발지: ${pickup} · 목적지: ${drop}` +
+        (time ? ` · 희망 출발시간: ${time}` : "");
+    });
 
-    // 🧠 자연어 의도 파악 및 대화 흐름 처리 엔진 (Day 28 시나리오 9개 완벽 대응)
-    function processNaturalLanguage(text) {
-        const lower = text.toLowerCase();
+    const reserveResult = document.getElementById("reserveResult");
+    const reserveResultText = document.getElementById("reserveResultText");
+    document.getElementById("reserveForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const target = document.getElementById("reserveTarget").value.trim();
+      const date = document.getElementById("reserveDate").value;
+      const time = document.getElementById("reserveTime").value;
+      const people = document.getElementById("reservePeople").value;
 
-        // 9번: 처음부터 다시
-        if (lower.includes("처음부터") || lower.includes("처음부터 다시") || lower.includes("리셋")) {
-            sharedPlaceData = { 종류: "", 지역: "", 이름: "", 출발지: "", 시간: "즉시 출발", 차종: "일반 택시" };
-            updateTaxiDestination();
-            return "🔄 모든 설정을 초기화했습니다. 어떤 장소를 찾고 계신가요? (예: 식당, 숙소 등)";
-        }
+      if (!target || !date || !time) {
+        alert("예약 대상/날짜/시간은 필수입니다.");
+        return;
+      }
 
-        // 장소 변경 / 지정 패턴 체크 (1, 2, 3, 7, 8번 시나리오 대응)
-        if (lower.includes("식당") || lower.includes("맛집") || lower.includes("음식점") || lower.includes("치킨")) {
-            sharedPlaceData.종류 = "식당";
-        } else if (lower.includes("숙소") || lower.includes("호텔") || lower.includes("펜션")) {
-            sharedPlaceData.종류 = "숙소";
-        } else if (lower.includes("쇼핑")) {
-            sharedPlaceData.종류 = "쇼핑";
-        } else if (lower.includes("일식")) {
-            sharedPlaceData.종류 = "일식집";
-        }
+      reserveResult.classList.remove("hidden");
+      reserveResultText.textContent = `${target} · ${date} ${time} · ${people}명 예약 접수 완료(데모)`;
+    });
 
-        // 지역 변경
-        const regions = ["서울", "부산", "제주", "인천", "대구", "광주", "대전", "울산", "경기", "강원", "충청", "전라", "경상", "서쪽", "동쪽"];
-        for (let reg of regions) {
-            if (lower.includes(reg)) {
-                sharedPlaceData.지역 = reg;
-            }
-        }
-
-        // 구체적 장소명 변경 (청와대, 경복궁, 창덕궁, 엄중식, 집 등)
-        if (lower.includes("청와대")) {
-            sharedPlaceData.이름 = "청와대";
-            sharedPlaceData.종류 = sharedPlaceData.종류 || "관람";
-        } else if (lower.includes("경복궁")) {
-            sharedPlaceData.이름 = "경복궁";
-            sharedPlaceData.종류 = sharedPlaceData.종류 || "관람";
-        } else if (lower.includes("창덕궁")) {
-            sharedPlaceData.이름 = "창덕궁";
-            sharedPlaceData.종류 = sharedPlaceData.종류 || "관람";
-        } else if (lower.includes("엄중식")) {
-            sharedPlaceData.이름 = "엄중식 식당";
-            sharedPlaceData.종류 = sharedPlaceData.종류 || "식당";
-        } else if (lower.includes("헬스장") && lower.includes("없어도")) {
-            return "네, 헬스장 조건은 제외하고 다시 숙소 후보를 찾아드릴게요. 어떤 지역으로 원하시나요?";
-        } else if (lower.includes("숙소는 a") || lower.includes("숙소 a")) {
-            sharedPlaceData.이름 = "숙소 A";
-            sharedPlaceData.종류 = "숙소";
-        } else if (lower.includes("숙소는 b") || lower.includes("숙소 b")) {
-            sharedPlaceData.이름 = "숙소 B";
-            sharedPlaceData.종류 = "숙소";
-        } else if (lower.length >= 2 && !lower.includes("추천") && !lower.includes("불러줘") && !lower.includes("출발") && !lower.includes("택시")) {
-            if (!sharedPlaceData.이름 && !lower.includes("시") && !lower.includes("분")) {
-                sharedPlaceData.이름 = text;
-                sharedPlaceData.종류 = sharedPlaceData.종류 || "일반 장소";
-            }
-        }
-
-        // 택시/출발지/시간 변경 패턴 체크 (4, 5, 6, 8번 시나리오 대응)
-        if (lower.includes("고급 택시") || lower.includes("모범") || lower.includes("대형")) {
-            sharedPlaceData.차종 = "고급 택시";
-        } else if (lower.includes("일반 택시") || lower.includes("아무 택시")) {
-            sharedPlaceData.차종 = "일반 택시";
-        }
-
-        // 시간 변경
-        if (lower.includes("4시 30분") || lower.includes("4시반")) {
-            sharedPlaceData.시간 = "오후 4:30";
-        } else if (lower.includes("20시 30분") || lower.includes("8시 30분")) {
-            sharedPlaceData.시간 = "오후 8:30";
-        } else if (lower.includes("4시")) {
-            sharedPlaceData.시간 = "오후 4:00";
-        } else if (lower.includes("6시")) {
-            sharedPlaceData.시간 = "오후 6:00";
-        } else if (lower.includes("출발") && (lower.includes("시") || lower.includes("분"))) {
-            sharedPlaceData.시간 = text;
-        }
-
-        // 출발지 변경 (집, 엄중식 등)
-        if (lower.includes("집에서") || lower.includes("집 출발")) {
-            sharedPlaceData.출발지 = "자택";
-        } else if (lower.includes("엄중식") || lower.includes("엄중식이라는 식당")) {
-            sharedPlaceData.출발지 = "엄중식 식당";
-        } else if (lower.includes("에서 출발") || lower.includes("에서")) {
-            let parts = text.split("에서")[0].trim();
-            if (parts) sharedPlaceData.출발지 = parts;
-        }
-
-        updateTaxiDestination();
-
-        let response = "";
-        let dest = sharedPlaceData.이름 || sharedPlaceData.지역 || "목적지 미정";
-
-        if (lower.includes("택시") || lower.includes("불러") || lower.includes("호출") || sharedPlaceData.출발지) {
-            if (!sharedPlaceData.출발지) {
-                sharedPlaceData.출발지 = "현재 위치";
-            }
-            
-            saveBookingToSupabase(sharedPlaceData.출발지, sharedPlaceData.시간);
-
-            response = `🚗 [택시 배차 완료]\n` +
-                       `-----------------------------\n` +
-                       `📍 출발지: ${sharedPlaceData.출발지}\n` +
-                       `🏁 목적지: ${dest}\n` +
-                       `⏰ 출발 시간: ${sharedPlaceData.시간}\n` +
-                       `🚕 차종: ${sharedPlaceData.차종}\n` +
-                       `-----------------------------\n` +
-                       `🎉 요청사항이 반영되어 성공적으로 배차되었습니다! (DB 저장 완료)`;
-        } else {
-            response = `📍 [장소 Context 업데이트]\n` +
-                       `- 종류: ${sharedPlaceData.종류 || '미정'}\n` +
-                       `- 지역: ${sharedPlaceData.지역 || '미정'}\n` +
-                       `- 장소명: ${sharedPlaceData.이름 || '미정'}\n\n`;
-            
-            if (sharedPlaceData.종류 && (sharedPlaceData.지역 || sharedPlaceData.이름)) {
-                response += `✅ 장소가 지정되었습니다! "지금 거기로 택시를 불러줘" 또는 출발지를 말씀해주시면 택시 배차로 이어집니다.`;
-            } else {
-                response += `추가로 원하시는 조건(지역, 장소 이름, 변경 사항 등)을 자유롭게 말씀해주세요!`;
-            }
-        }
-
-        return response;
-    }
-
-    function sendMessage(tabIdx) {
-        const inputField = document.getElementById(`input-${tabIdx}`);
-        const text = inputField.value.trim();
-        if (!text) return;
-
-        appendMessage(tabIdx, 'user', text);
-        inputField.value = '';
-
-        setTimeout(() => {
-            const botReply = processNaturalLanguage(text);
-            
-            // 양쪽 탭 모두에 동기화 반영
-            appendMessage(0, 'bot', botReply);
-            appendMessage(1, 'bot', botReply);
-            
-            updateTaxiDestination();
-        }, 500);
-    }
-</script>
-
+    // 초기 탭
+    activateTab("place");
+  </script>
 </body>
 </html>

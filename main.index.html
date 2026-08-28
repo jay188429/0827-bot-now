@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>장소 접수 및 택시 배차 시스템</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Malgun Gothic', sans-serif; }
+        body { background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .container { width: 900px; max-width: 100%; height: 600px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; overflow: hidden; }
+        
+        /* 사이드바 탭 */
+        .sidebar { width: 250px; background: #2c3e50; color: white; display: flex; flex-direction: column; }
+        .sidebar h2 { padding: 20px; font-size: 18px; border-bottom: 1px solid #34495e; text-align: center; }
+        .tab-btn { padding: 15px 20px; background: none; border: none; color: #bdc3c7; text-align: left; font-size: 16px; cursor: pointer; transition: 0.3s; }
+        .tab-btn.active, .tab-btn:hover { background: #34495e; color: white; border-left: 4px solid #3498db; }
+
+        /* 컨텐츠 영역 */
+        .content { flex: 1; display: none; flex-direction: column; height: 100%; }
+        .content.active { display: flex; }
+        .chat-header { padding: 15px 20px; background: #ecf0f1; border-bottom: 1px solid #ddd; font-weight: bold; color: #2c3e50; }
+        
+        /* 2단계 레이아웃 분할 */
+        .chat-layout { display: flex; flex: 1; overflow: hidden; }
+        .chat-main-area { flex: 1; display: flex; flex-direction: column; height: 100%; border-right: 1px solid #e0e0e0; }
+        .sidebar-info-panel { width: 280px; background: #f8f9fa; padding: 20px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
+        .info-card { background: white; border: 1px solid #e1e4e8; border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .info-card h3 { font-size: 15px; color: #2c3e50; margin-bottom: 10px; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+        .info-item { font-size: 13px; color: #555; margin-bottom: 8px; }
+        .info-item span { font-weight: bold; color: #333; }
+        
+        /* 챗봇 영역 */
+        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #fafbfc; }
+        .message { max-width: 75%; padding: 12px 16px; border-radius: 10px; font-size: 14px; line-height: 1.4; }
+        .message.bot { background: #e0e0e0; color: #333; align-self: flex-start; }
+        .message.user { background: #3498db; color: white; align-self: flex-end; }
+        
+        /* 입력 영역 */
+        .chat-input-box { display: flex; padding: 15px; background: white; border-top: 1px solid #ddd; gap: 10px; }
+        .chat-input-box input { flex: 1; padding: 10px 15px; border: 1px solid #ccc; border-radius: 6px; outline: none; font-size: 14px; }
+        .chat-input-box button { padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; white-space: nowrap; }
+        .chat-input-box button:hover { background: #2980b9; }
+        .mic-btn { background: #e74c3c !important; }
+        .mic-btn.listening { background: #c0392b !important; animation: pulse 1.5s infinite; }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="sidebar">
+        <h2>🚕 통합 예약 서비스</h2>
+        <a href="index.html" class="tab-btn" style="text-decoration: none; display: flex; align-items: center; gap: 8px;">🏠 메인 허브로</a>
+        <button class="tab-btn active" onclick="switchTab(0)">1단계: 장소 접수</button>
+        <button class="tab-btn" onclick="switchTab(1)">2단계: 택시 배차</button>
+    </div>
+
+    <!-- 1단계: 장소 접수 탭 -->
+    <div class="content active" id="tab-0">
+        <div class="chat-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>📍 1단계: 원하시는 장소와 조건을 말씀해주세요.</span>
+            <div id="auth-header-0" style="font-size: 13px; font-weight: normal;">
+                <button onclick="loginWithGoogle()" style="padding: 4px 10px; background: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">구글 로그인</button>
+            </div>
+        </div>
+        <div class="chat-messages" id="chat-box-0">
+            <div class="message bot">안녕하세요! 가고 싶으신 장소의 종류, 지역, 이름을 알려주세요. (예: 서울 서쪽에 쇼핑할 곳 추천해줘)</div>
+        </div>
+        <div class="chat-input-box">
+            <input type="text" id="input-0" placeholder="메시지를 입력하세요..." onkeypress="if(event.keyCode === 13) sendMessage(0)">
+            <button class="mic-btn" onclick="toggleSpeechRecognition(0)" title="음성 인식">🎤 음성입력</button>
+            <button onclick="sendMessage(0)">전송</button>
+        </div>
+    </div>
+
+    <!-- 2단계: 택시 배차 탭 -->
+    <div class="content" id="tab-1">
+        <div class="chat-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>🚗 2단계: 선택된 장소로 가는 택시를 호출합니다.</span>
+            <div id="auth-header-1" style="font-size: 13px; font-weight: normal;">
+                <button onclick="loginWithGoogle()" style="padding: 4px 10px; background: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">구글 로그인</button>
+            </div>
+        </div>
+        <div class="chat-layout">
+            <div class="chat-main-area">
+                <div class="chat-messages" id="chat-box-1">
+                    <div class="message bot">안녕하세요! 1단계에서 확정된 장소가 오른쪽에 자동으로 연동됩니다. 출발지와 출발 시간을 알려주세요.</div>
+                </div>
+                <div class="chat-input-box">
+                    <input type="text" id="input-1" placeholder="출발지와 시간을 입력하세요..." onkeypress="if(event.keyCode === 13) sendMessage(1)">
+                    <button class="mic-btn" onclick="toggleSpeechRecognition(1)" title="음성 인식">🎤 음성입력</button>
+                    <button onclick="sendMessage(1)">전송</button>
+                </div>
+            </div>
+            <div class="sidebar-info-panel">
+                <div class="info-card">
+                    <h3>📍 연동된 목적지 정보</h3>
+                    <div class="info-item">종류: <span id="info-type">-</span></div>
+                    <div class="info-item">지역: <span id="info-region">-</span></div>
+                    <div class="info-item">이름: <span id="info-name">-</span></div>
+                </div>
+                <div class="info-card" style="background: #e8f4fd; border-color: #bbeecc;">
+                    <h3 style="border-color: #2ecc71;">💡 안내</h3>
+                    <div style="font-size: 12px; color: #444; line-height: 1.4;">
+                        1단계에서 접수하신 장소 정보가 실시간으로 반영됩니다. 출발지를 입력해 택시 배차를 완료하세요!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 💡 Supabase 설정 (login.html에 있던 올바른 정보 적용)
+    const SUPABASE_URL = 'https://kxncijvjruixwiqpnnwo.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4bmNpanZqcnVpeHdpcXBubndvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NTQzMDksImV4cCI6MjEwMzQzMDMwOX0.V6Y6rYo5g6y7PqKYSRTpLcNC8BnGg_HMCZV2UC7d104';
+
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // 페이지 로드 시 세션 확인 및 인증 상태 리스너 등록
+    window.onload = async () => {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            updateAuthUI(session.user);
+        }
+
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                updateAuthUI(session.user);
+            } else {
+                resetAuthUI();
+            }
+        });
+    };
+
+    // Google 로그인 함수
+    async function loginWithGoogle() {
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin
+            }
+        });
+        if (error) {
+            alert('로그인 오류: ' + error.message);
+        }
+    }
+
+    // 로그아웃 함수
+    async function logout() {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) {
+            alert('로그아웃 오류: ' + error.message);
+        }
+    }
+
+    // 로그인 후 UI 업데이트
+    function updateAuthUI(user) {
+        const meta = user.user_metadata;
+        const name = meta.full_name || meta.name || '사용자';
+        const html = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-weight: bold; color: #2c3e50;">${name}님</span>
+                <button onclick="logout()" style="padding: 3px 8px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">로그아웃</button>
+            </div>
+        `;
+        document.getElementById('auth-header-0').innerHTML = html;
+        document.getElementById('auth-header-1').innerHTML = html;
+    }
+
+    // 로그아웃 시 UI 초기화
+    function resetAuthUI() {
+        const html = `<button onclick="loginWithGoogle()" style="padding: 4px 10px; background: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">구글 로그인</button>`;
+        document.getElementById('auth-header-0').innerHTML = html;
+        document.getElementById('auth-header-1').innerHTML = html;
+    }
+
+    // 🎤 음성 인식 (Speech Recognition) 기능
+    let recognition = null;
+    function toggleSpeechRecognition(tabIdx) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("현재 브라우저는 음성 인식을 지원하지 않습니다. (Chrome 브라우저를 이용해주세요)");
+            return;
+        }
+
+        if (!recognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'ko-KR';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onresult = (event) => {
+                const speechResult = event.results[0][0].transcript;
+                document.getElementById(`input-${tabIdx}`).value = speechResult;
+                sendMessage(tabIdx);
+            };
+
+            recognition.onerror = (event) => {
+                console.error("음성 인식 오류:", event.error);
+                alert("음성 인식 중 오류가 발생했습니다: " + event.error);
+            };
+        }
+
+        try {
+            recognition.start();
+        } catch (e) {
+            console.log("이미 음성 인식이 실행 중입니다.");
+        }
+    }
+
+    // Supabase에 예약/배차 데이터 저장하는 함수
+    async function saveBookingToSupabase(departureText, timeText) {
+        const { data, error } = await supabaseClient
+            .from('reservations')
+            .insert([
+                {
+                    place_type: sharedPlaceData.종류 || '미정',
+                    place_region: sharedPlaceData.지역 || '미정',
+                    place_name: sharedPlaceData.이름 || '미정',
+                    departure: departureText,
+                    time: timeText
+                }
+            ]);
+
+        if (error) {
+            console.error('Supabase 저장 실패:', error);
+        } else {
+            console.log('Supabase 저장 성공!', data);
+        }
+    }
+
+    // 전역 상태 데이터 공유 객체 (Context / Memory 모사)
+    let sharedPlaceData = {
+        종류: "",
+        지역: "",
+        이름: "",
+        출발지: "",
+        시간: "즉시 출발",
+        차종: "일반 택시"
+    };
+
+    function switchTab(index) {
+        const contents = document.querySelectorAll('.content');
+        const buttons = document.querySelectorAll('.tab-btn');
+        
+        contents.forEach((c, idx) => {
+            c.classList.toggle('active', idx === index);
+        });
+        buttons.forEach((b, idx) => {
+            b.classList.toggle('active', idx === index);
+        });
+
+        if (index === 1) {
+            updateTaxiDestination();
+        }
+    }
+
+    function updateTaxiDestination() {
+        document.getElementById('info-type').innerText = sharedPlaceData.종류 || '미정';
+        document.getElementById('info-region').innerText = sharedPlaceData.지역 || '미정';
+        document.getElementById('info-name').innerText = sharedPlaceData.이름 || '미정';
+    }
+
+    function appendMessage(tabIdx, sender, text) {
+        const chatBox = document.getElementById(`chat-box-${tabIdx}`);
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${sender}`;
+        msgDiv.innerText = text;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // 🧠 자연어 의도 파악 및 대화 흐름 처리 엔진 (Day 28 시나리오 9개 완벽 대응)
+    function processNaturalLanguage(text) {
+        const lower = text.toLowerCase();
+
+        // 9번: 처음부터 다시
+        if (lower.includes("처음부터") || lower.includes("처음부터 다시") || lower.includes("리셋")) {
+            sharedPlaceData = { 종류: "", 지역: "", 이름: "", 출발지: "", 시간: "즉시 출발", 차종: "일반 택시" };
+            updateTaxiDestination();
+            return "🔄 모든 설정을 초기화했습니다. 어떤 장소를 찾고 계신가요? (예: 식당, 숙소 등)";
+        }
+
+        // 장소 변경 / 지정 패턴 체크 (1, 2, 3, 7, 8번 시나리오 대응)
+        if (lower.includes("식당") || lower.includes("맛집") || lower.includes("음식점") || lower.includes("치킨")) {
+            sharedPlaceData.종류 = "식당";
+        } else if (lower.includes("숙소") || lower.includes("호텔") || lower.includes("펜션")) {
+            sharedPlaceData.종류 = "숙소";
+        } else if (lower.includes("쇼핑")) {
+            sharedPlaceData.종류 = "쇼핑";
+        } else if (lower.includes("일식")) {
+            sharedPlaceData.종류 = "일식집";
+        }
+
+        // 지역 변경
+        const regions = ["서울", "부산", "제주", "인천", "대구", "광주", "대전", "울산", "경기", "강원", "충청", "전라", "경상", "서쪽", "동쪽"];
+        for (let reg of regions) {
+            if (lower.includes(reg)) {
+                sharedPlaceData.지역 = reg;
+            }
+        }
+
+        // 구체적 장소명 변경 (청와대, 경복궁, 창덕궁, 엄중식, 집 등)
+        if (lower.includes("청와대")) {
+            sharedPlaceData.이름 = "청와대";
+            sharedPlaceData.종류 = sharedPlaceData.종류 || "관람";
+        } else if (lower.includes("경복궁")) {
+            sharedPlaceData.이름 = "경복궁";
+            sharedPlaceData.종류 = sharedPlaceData.종류 || "관람";
+        } else if (lower.includes("창덕궁")) {
+            sharedPlaceData.이름 = "창덕궁";
+            sharedPlaceData.종류 = sharedPlaceData.종류 || "관람";
+        } else if (lower.includes("엄중식")) {
+            sharedPlaceData.이름 = "엄중식 식당";
+            sharedPlaceData.종류 = sharedPlaceData.종류 || "식당";
+        } else if (lower.includes("헬스장") && lower.includes("없어도")) {
+            return "네, 헬스장 조건은 제외하고 다시 숙소 후보를 찾아드릴게요. 어떤 지역으로 원하시나요?";
+        } else if (lower.includes("숙소는 a") || lower.includes("숙소 a")) {
+            sharedPlaceData.이름 = "숙소 A";
+            sharedPlaceData.종류 = "숙소";
+        } else if (lower.includes("숙소는 b") || lower.includes("숙소 b")) {
+            sharedPlaceData.이름 = "숙소 B";
+            sharedPlaceData.종류 = "숙소";
+        } else if (lower.length >= 2 && !lower.includes("추천") && !lower.includes("불러줘") && !lower.includes("출발") && !lower.includes("택시")) {
+            if (!sharedPlaceData.이름 && !lower.includes("시") && !lower.includes("분")) {
+                sharedPlaceData.이름 = text;
+                sharedPlaceData.종류 = sharedPlaceData.종류 || "일반 장소";
+            }
+        }
+
+        // 택시/출발지/시간 변경 패턴 체크 (4, 5, 6, 8번 시나리오 대응)
+        if (lower.includes("고급 택시") || lower.includes("모범") || lower.includes("대형")) {
+            sharedPlaceData.차종 = "고급 택시";
+        } else if (lower.includes("일반 택시") || lower.includes("아무 택시")) {
+            sharedPlaceData.차종 = "일반 택시";
+        }
+
+        // 시간 변경
+        if (lower.includes("4시 30분") || lower.includes("4시반")) {
+            sharedPlaceData.시간 = "오후 4:30";
+        } else if (lower.includes("20시 30분") || lower.includes("8시 30분")) {
+            sharedPlaceData.시간 = "오후 8:30";
+        } else if (lower.includes("4시")) {
+            sharedPlaceData.시간 = "오후 4:00";
+        } else if (lower.includes("6시")) {
+            sharedPlaceData.시간 = "오후 6:00";
+        } else if (lower.includes("출발") && (lower.includes("시") || lower.includes("분"))) {
+            sharedPlaceData.시간 = text;
+        }
+
+        // 출발지 변경 (집, 엄중식 등)
+        if (lower.includes("집에서") || lower.includes("집 출발")) {
+            sharedPlaceData.출발지 = "자택";
+        } else if (lower.includes("엄중식") || lower.includes("엄중식이라는 식당")) {
+            sharedPlaceData.출발지 = "엄중식 식당";
+        } else if (lower.includes("에서 출발") || lower.includes("에서")) {
+            let parts = text.split("에서")[0].trim();
+            if (parts) sharedPlaceData.출발지 = parts;
+        }
+
+        updateTaxiDestination();
+
+        let response = "";
+        let dest = sharedPlaceData.이름 || sharedPlaceData.지역 || "목적지 미정";
+
+        if (lower.includes("택시") || lower.includes("불러") || lower.includes("호출") || sharedPlaceData.출발지) {
+            if (!sharedPlaceData.출발지) {
+                sharedPlaceData.출발지 = "현재 위치";
+            }
+            
+            saveBookingToSupabase(sharedPlaceData.출발지, sharedPlaceData.시간);
+
+            response = `🚗 [택시 배차 완료]\n` +
+                       `-----------------------------\n` +
+                       `📍 출발지: ${sharedPlaceData.출발지}\n` +
+                       `🏁 목적지: ${dest}\n` +
+                       `⏰ 출발 시간: ${sharedPlaceData.시간}\n` +
+                       `🚕 차종: ${sharedPlaceData.차종}\n` +
+                       `-----------------------------\n` +
+                       `🎉 요청사항이 반영되어 성공적으로 배차되었습니다! (DB 저장 완료)`;
+        } else {
+            response = `📍 [장소 Context 업데이트]\n` +
+                       `- 종류: ${sharedPlaceData.종류 || '미정'}\n` +
+                       `- 지역: ${sharedPlaceData.지역 || '미정'}\n` +
+                       `- 장소명: ${sharedPlaceData.이름 || '미정'}\n\n`;
+            
+            if (sharedPlaceData.종류 && (sharedPlaceData.지역 || sharedPlaceData.이름)) {
+                response += `✅ 장소가 지정되었습니다! "지금 거기로 택시를 불러줘" 또는 출발지를 말씀해주시면 택시 배차로 이어집니다.`;
+            } else {
+                response += `추가로 원하시는 조건(지역, 장소 이름, 변경 사항 등)을 자유롭게 말씀해주세요!`;
+            }
+        }
+
+        return response;
+    }
+
+    function sendMessage(tabIdx) {
+        const inputField = document.getElementById(`input-${tabIdx}`);
+        const text = inputField.value.trim();
+        if (!text) return;
+
+        appendMessage(tabIdx, 'user', text);
+        inputField.value = '';
+
+        setTimeout(() => {
+            const botReply = processNaturalLanguage(text);
+            
+            // 양쪽 탭 모두에 동기화 반영
+            appendMessage(0, 'bot', botReply);
+            appendMessage(1, 'bot', botReply);
+            
+            updateTaxiDestination();
+        }, 500);
+    }
+</script>
+
+</body>
+</html>

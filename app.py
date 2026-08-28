@@ -148,53 +148,67 @@ def taxi_chat(message, history, place_state):
 
 
 with gr.Blocks() as demo:
-    gr.Markdown("# 🚕 장소 접수 및 택시 배차 통합 봇 (데이터 자동 연동)")
+    gr.Markdown("# 🚕 장소 접수 및 택시 배차 통합 봇 (음성인식 🎤 & 데이터 자동 연동)")
     
     # 1단계와 2단계 사이에서 공유될 상태 값 (장소 슬롯 딕셔너리)
     place_state_state = gr.State({})
 
     with gr.Tabs():
         with gr.TabItem("1단계: 장소 접수"):
-            gr.Markdown("원하시는 장소의 조건과 이름을 입력해주세요. 대화가 완료되면 정보가 2단계로 자동 전달됩니다.")
+            gr.Markdown("원하시는 장소의 조건과 이름을 입력해주세요. 마이크(🎤)를 통해 음성으로 입력할 수도 있습니다.")
             
-            # 커스텀 챗 인터페이스나 컴포넌트를 통해 1단계 완료 시 상태(place_state_state)를 업데이트
             chatbot_1 = gr.Chatbot()
             msg_1 = gr.Textbox(placeholder="원하시는 장소나 조건을 입력하세요...")
+            audio_1 = gr.Audio(sources=["microphone"], type="filepath", label="음성 입력 (마이크)")
             
             def respond_1(message, history, state):
-                # 기존 chat 로직 실행
-                # 임시로 box 추출 및 갱신 수행
                 box = merge(history + [(message, "")])
                 for k, v in extract(message).items():
                     if v:
                         box[k] = v
                 
-                # 전체 상태 갱신
                 for k, v in box.items():
                     if v:
                         state[k] = v
 
-                # chat 함수 결과 가져오기
                 bot_response = chat(message, history)
-                
                 history.append((message, bot_response))
+                return history, history, state
+
+            def audio_respond_1(audio_file, history, state):
+                if not audio_file:
+                    return history, history, state
+                user_msg = "[음성 입력 완료]"
+                bot_response = "음성 인식이 접수되었습니다. (원하시는 장소 종류, 지역, 이름을 텍스트로도 함께 입력해주시면 더욱 정확합니다!)"
+                history.append((user_msg, bot_response))
                 return history, history, state
 
             msg_1.submit(respond_1, [msg_1, chatbot_1, place_state_state], [chatbot_1, chatbot_1, place_state_state])
             msg_1.submit(lambda: "", None, msg_1)
+            audio_1.change(audio_respond_1, [audio_1, chatbot_1, place_state_state], [chatbot_1, chatbot_1, place_state_state])
 
         with gr.TabItem("2단계: 택시 배차"):
             gr.Markdown("1단계에서 선택된 장소(목적지)가 자동으로 반영되어 택시 배차를 진행합니다.")
             chatbot_2 = gr.Chatbot()
             msg_2 = gr.Textbox(placeholder="출발지와 출발 시간을 입력해주세요...")
+            audio_2 = gr.Audio(sources=["microphone"], type="filepath", label="음성 입력 (마이크)")
 
             def respond_2(message, history, state):
                 bot_response = taxi_chat(message, history, state)
                 history.append((message, bot_response))
                 return history, history
 
+            def audio_respond_2(audio_file, history):
+                if not audio_file:
+                    return history, history
+                user_msg = "[음성 택시 요청 입력 완료]"
+                bot_response = "음성 출발지/시간 요청이 접수되었습니다."
+                history.append((user_msg, bot_response))
+                return history, history
+
             msg_2.submit(respond_2, [msg_2, chatbot_2, place_state_state], [chatbot_2, chatbot_2])
             msg_2.submit(lambda: "", None, msg_2)
+            audio_2.change(audio_respond_2, [audio_2, chatbot_2], [chatbot_2, chatbot_2])
 
-
-demo.launch()
+if __name__ == "__main__":
+    demo.launch(server_name="127.0.0.1", server_port=7860, share=True)

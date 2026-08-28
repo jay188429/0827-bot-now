@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>장소 추천 및 택시 배차 시퀀스 흐름도 (Mermaid)</title>
+    <title>통합 서비스 시퀀스 흐름도 (Mermaid)</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Mermaid CDN -->
@@ -18,18 +18,17 @@
                 primaryTextColor: '#1d1d1f',
                 primaryBorderColor: '#e0e0e0',
                 lineColor: '#86868b',
-                actorBkg: '#000000',
-                actorBorder: '#000000',
-                actorTextColor: '#ffffff',
-                actorLineColor: '#d2d2d7',
+                actorBkg: '#ffffff',
+                actorBorder: '#d2d2d7',
+                actorTextColor: '#1d1d1f',
+                actorLineColor: '#c7c7cc',
                 signalColor: '#0066cc',
                 signalTextColor: '#1d1d1f',
                 labelBoxBkgColor: '#ffffff',
-                labelBoxBorderColor: '#e0e0e0',
+                labelBoxBorderColor: '#d2d2d7',
                 labelTextColor: '#1d1d1f',
-                loopTextColor: '#1d1d1f',
                 noteBkgColor: '#f5f5f7',
-                noteBorderColor: '#e0e0e0',
+                noteBorderColor: '#d2d2d7',
                 noteTextColor: '#1d1d1f',
                 activationBkgColor: '#eaf3ff',
                 activationBorderColor: '#0066cc',
@@ -43,8 +42,8 @@
 
     <!-- Header -->
     <header class="w-full max-w-5xl mb-6 text-center">
-        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 mb-2">🚕 장소 추천 및 택시 배차 시퀀스 흐름도</h1>
-        <p class="text-sm sm:text-base text-slate-600">Day 28 봇 챌린지: 사용자, 어시스턴트, Context, Memory, 외부 서비스 간의 상호작용 시퀀스</p>
+        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 mb-2">🚕 장소 추천 및 택시 배차 통합 시퀀스 흐름도</h1>
+        <p class="text-sm sm:text-base text-slate-600">Day 28 완성형 챌린지: 손님, 어시스턴트, Context, Memory, 장소/택시 서비스, 기사, 관리자 간의 상호작용</p>
     </header>
 
     <!-- Main Card Container for Mermaid Diagram -->
@@ -53,100 +52,116 @@
         sequenceDiagram
             autonumber
 
-            actor U as 사용자
+            actor G as 손님
             participant B as 어시스턴트
-            participant CTX as Context<br/>현재 요청
-            participant MEM as Memory<br/>장기 정보
+            participant C as Context<br/>현재 요청
+            participant M as Memory<br/>장기 정보
             participant P as 장소 서비스
             participant T as 택시 서비스
-            actor CC as 콜센터
+            actor D as 택시기사
+            actor A as 관리자
 
-            Note over U,CC: 장소 추천부터 택시 호출까지
+            Note over G,D: 전반부는 장소 서비스, 후반부는 택시 서비스입니다
 
             rect rgba(255,255,255,0.92)
-                U->>B: "퇴근 후 갈 만한 조용한 장소를 찾아줘"
+                Note over G,P: 장소 서비스
+
+                G->>B: "퇴근 후 갈 만한 조용한 장소를 찾아줘"
                 activate B
 
-                B->>CTX: 새 요청 생성
-                activate CTX
-                CTX->>MEM: 사용자 선호 조회
-                activate MEM
-                MEM-->>CTX: 조용한 장소<br/>최근 방문 지역
-                deactivate MEM
+                B->>C: 장소 검색 요청 생성
+                activate C
+                C->>M: 선호·최근 장소 조회
+                activate M
+                M-->>C: 조용한 장소 선호<br/>최근 방문 지역
+                deactivate M
 
-                CTX->>P: 장소 검색 조건 전달
+                C->>P: 추천 조건 전달
                 activate P
-                P-->>CTX: 추천 장소 후보 반환
+                P-->>C: 장소 후보 반환
                 deactivate P
-                CTX-->>B: 추천 결과와 현재 상태 전달
-                deactivate CTX
+                C-->>B: 추천 결과 전달
+                deactivate C
 
-                B-->>U: 추천 장소 3곳 안내
-                U->>B: "두 번째 장소를 선택할게"
+                B-->>G: 추천 장소 3곳 안내
+                G->>B: "두 번째 장소를 선택할게"
 
-                B->>CTX: 선택 장소 확정
-                CTX-->>B: 장소명·주소·좌표 반환
-                B-->>U: "장소를 저장했어요"
+                B->>C: 선택 장소 저장
+                C-->>B: 장소명·주소·좌표 확정
+                B-->>G: "선택한 장소를 저장했어요"
             end
 
-            rect rgba(245,245,247,0.95)
-                U->>B: "지금 거기로 택시를 불러줘"
+            rect rgba(234,243,255,0.72)
+                Note over G,T: 택시 서비스
 
-                B->>CTX: 직전 장소 Context 조회
-                CTX-->>B: 목적지 정보 반환
+                G->>B: "지금 거기로 택시를 불러줘"
+                B->>C: 직전 장소를 목적지로 조회
+                C-->>B: 목적지 정보 반환
 
-                B->>MEM: 선호 차종·결제수단 조회
-                MEM-->>B: 일반 차종·등록 결제수단
+                B->>M: 선호 차종·결제수단 조회
+                M-->>B: 일반 차종·등록 결제수단
 
-                B-->>U: "현재 위치에서 바로 호출할까요?"
-                U->>B: "네, 호출해줘"
+                B-->>G: "현재 위치에서 바로 호출할까요?"
+                G->>B: "네, 호출해줘"
 
-                B->>CTX: 출발지·목적지·호출 방식 확정
-                CTX-->>B: 택시 요청 정보 반환
+                B->>C: 출발지·목적지·호출 방식 확정
+                C-->>B: 택시 요청 정보 반환
 
                 B->>T: 택시 호출 요청
                 activate T
+                T->>D: 운행 요청·픽업 정보 전달
+                activate D
 
-                alt 기사 배차 성공
+                alt 기사 수락
+                    D-->>T: 호출 수락
                     T-->>B: 기사·차량·예상 도착시간
-                    B-->>U: "배차가 완료됐어요"
-                else 기사 배차 지연
-                    T-->>B: 주변 기사 부족
-                    B-->>U: "조금 더 기다리거나 다시 호출할까요?"
-                    U->>B: "다시 호출해줘"
+                    B-->>G: "배차가 완료됐어요"
+                else 기사 응답 지연
+                    D-->>T: 응답 없음 또는 수락 지연
+                    T-->>B: 배차 지연 상태 전달
+                    B-->>G: "기사 배차가 지연되고 있어요"
+                    G->>B: "다시 호출해줘"
                     B->>T: 재배차 요청
-                    T-->>B: 배차 결과 반환
+                    T->>D: 재호출 요청
+                    D-->>T: 재호출 결과
+                    T-->>B: 배차 결과 전달
                 end
 
+                D-->>T: 픽업 이동 시작
+                T-->>B: 기사 이동 상태
+                B-->>G: "기사님이 출발했어요"
+
+                deactivate D
                 deactivate T
                 deactivate B
             end
 
-            rect rgba(39,39,41,0.96)
-                Note over B,MEM: Context와 Memory의 저장 범위
+            rect rgba(245,245,247,0.95)
+                Note over C,M: 요청 데이터 관리
 
-                B->>CTX: 현재 요청 상태 갱신
-                Note right of CTX: 이번 대화에서 유지<br/>장소·출발지·목적지·배차 상태
+                B->>C: 현재 요청 상태 갱신
+                Note right of C: Context<br/>이번 대화에서 유지<br/>장소·출발지·목적지·배차 상태
 
-                opt 이용 결과 저장에 동의
-                    B->>MEM: 선택 장소·택시 이용 이력 저장
-                    MEM-->>B: 다음 요청에 활용 가능
+                opt 손님이 저장에 동의
+                    B->>M: 선택 장소·택시 이용 이력 저장
+                    M-->>B: 다음 요청에 활용 가능
                 end
+                Note right of M: Memory<br/>요청이 끝난 뒤에도 유지 가능<br/>선호·최근 장소·이용 이력
             end
 
-            opt 콜센터 지원
-                CC->>B: 사용자 요청 상태 확인
-                B-->>CC: 현재 Context와 배차 상태 제공
-                CC->>T: 배차 상태 조회
-                T-->>CC: 현재 기사·차량 상태
-                CC-->>U: 진행 상황 안내
+            opt 관리자 운영 지원
+                A->>T: 배차 상태 조회
+                T-->>A: 기사 응답·이동 상태 제공
+                A->>D: 운행 상태 확인
+                D-->>A: 현재 위치·출발 상태 전달
+                A-->>G: 지연 상황 및 정책 안내
             end
         </div>
     </main>
 
     <!-- Footer Description -->
     <footer class="w-full max-w-5xl mt-6 text-center text-xs sm:text-sm text-slate-500">
-        <p>Day28 봇 챌린지 시나리오 대응용 Mermaid 시퀀스 다이어그램 HTML</p>
+        <p>Day28 통합 서비스 시나리오 Mermaid 다이어그램 HTML</p>
     </footer>
 
 </body>

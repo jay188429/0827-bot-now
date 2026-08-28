@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Google OAuth Login</title>
+    <!-- Supabase JS SDK CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f4f4f9; }
+        .box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; width: 320px; }
+        .btn { background: #4285F4; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 10px; }
+        .btn:hover { background: #357ae8; }
+        #user-info { display: none; text-align: left; margin-top: 20px; }
+        #user-info img { border-radius: 50%; width: 50px; height: 50px; display: block; margin: 0 auto 10px auto; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>Supabase Google Login</h2>
+        
+        <div id="login-section">
+            <button class="btn" onclick="loginWithGoogle()">구글 로그인</button>
+        </div>
+
+        <div id="user-info">
+            <img id="user-pic" src="" alt="프로필">
+            <h4 id="user-name" style="text-align: center; margin: 5px 0;"></h4>
+            <p id="user-email" style="text-align: center; color: #666; font-size: 14px; margin: 0 0 15px 0;"></p>
+            <button class="btn" onclick="logout()" style="background: #ff4d4d;">로그아웃</button>
+        </div>
+    </div>
+
+    <script>
+       // .env에 적어둔 실제 Supabase URL과 Anon Key를 아래에 직접 넣어주세요!
+        const SUPABASE_URL = 'https://kxncijvjruixwiqpnnwo.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4bmNpanZqcnVpeHdpcXBubndvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NTQzMDksImV4cCI6MjEwMzQzMDMwOX0.V6Y6rYo5g6y7PqKYSRTpLcNC8BnGg_HMCZV2UC7d104';
+
+        // Supabase 클라이언트 초기화
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 페이지 로드 시 세션 확인
+        window.onload = async () => {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                updateUI(session.user);
+            }
+
+            // 인증 상태 변화 리스너
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (session) {
+                    updateUI(session.user);
+                } else {
+                    resetUI();
+                }
+            });
+        };
+
+        // Supabase OAuth (Google) 로그인 요청
+        const loginWithGoogle = async () => {
+            const { error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin
+                }
+            });
+            if (error) {
+                alert('로그인 오류: ' + error.message);
+            }
+        };
+
+        // UI에 사용자 정보 표시
+        const updateUI = (user) => {
+            const meta = user.user_metadata;
+            document.getElementById('user-name').innerText = meta.full_name || meta.name || '사용자';
+            document.getElementById('user-email').innerText = user.email;
+            if (meta.avatar_url || meta.picture) {
+                document.getElementById('user-pic').src = meta.avatar_url || meta.picture;
+            }
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('user-info').style.display = 'block';
+        };
+
+        // UI 초기화 (로그아웃 상태)
+        const resetUI = () => {
+            document.getElementById('user-info').style.display = 'none';
+            document.getElementById('login-section').style.display = 'block';
+        };
+
+        // 로그아웃
+        const logout = async () => {
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) {
+                alert('로그아웃 오류: ' + error.message);
+            }
+        };
+    </script>
+</body>
+</html>

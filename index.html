@@ -37,10 +37,17 @@
         .message.user { background: #3498db; color: white; align-self: flex-end; }
         
         /* 입력 영역 */
-        .chat-input-box { display: flex; padding: 15px; background: white; border-top: 1px solid #ddd; }
+        .chat-input-box { display: flex; padding: 15px; background: white; border-top: 1px solid #ddd; gap: 10px; }
         .chat-input-box input { flex: 1; padding: 10px 15px; border: 1px solid #ccc; border-radius: 6px; outline: none; font-size: 14px; }
-        .chat-input-box button { margin-left: 10px; padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .chat-input-box button { padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; white-space: nowrap; }
         .chat-input-box button:hover { background: #2980b9; }
+        .mic-btn { background: #e74c3c !important; }
+        .mic-btn.listening { background: #c0392b !important; animation: pulse 1.5s infinite; }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
@@ -54,19 +61,30 @@
 
     <!-- 1단계: 장소 접수 탭 -->
     <div class="content active" id="tab-0">
-        <div class="chat-header">📍 1단계: 원하시는 장소와 조건을 말씀해주세요.</div>
+        <div class="chat-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>📍 1단계: 원하시는 장소와 조건을 말씀해주세요.</span>
+            <div id="auth-header-0" style="font-size: 13px; font-weight: normal;">
+                <button onclick="loginWithGoogle()" style="padding: 4px 10px; background: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">구글 로그인</button>
+            </div>
+        </div>
         <div class="chat-messages" id="chat-box-0">
             <div class="message bot">안녕하세요! 가고 싶으신 장소의 종류, 지역, 이름을 알려주세요. (예: 서울 서쪽에 쇼핑할 곳 추천해줘)</div>
         </div>
         <div class="chat-input-box">
             <input type="text" id="input-0" placeholder="메시지를 입력하세요..." onkeypress="if(event.keyCode === 13) sendMessage(0)">
+            <button class="mic-btn" onclick="toggleSpeechRecognition(0)" title="음성 인식">🎤 음성입력</button>
             <button onclick="sendMessage(0)">전송</button>
         </div>
     </div>
 
     <!-- 2단계: 택시 배차 탭 -->
     <div class="content" id="tab-1">
-        <div class="chat-header">🚗 2단계: 선택된 장소로 가는 택시를 호출합니다.</div>
+        <div class="chat-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>🚗 2단계: 선택된 장소로 가는 택시를 호출합니다.</span>
+            <div id="auth-header-1" style="font-size: 13px; font-weight: normal;">
+                <button onclick="loginWithGoogle()" style="padding: 4px 10px; background: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">구글 로그인</button>
+            </div>
+        </div>
         <div class="chat-layout">
             <div class="chat-main-area">
                 <div class="chat-messages" id="chat-box-1">
@@ -74,6 +92,7 @@
                 </div>
                 <div class="chat-input-box">
                     <input type="text" id="input-1" placeholder="출발지와 시간을 입력하세요..." onkeypress="if(event.keyCode === 13) sendMessage(1)">
+                    <button class="mic-btn" onclick="toggleSpeechRecognition(1)" title="음성 인식">🎤 음성입력</button>
                     <button onclick="sendMessage(1)">전송</button>
                 </div>
             </div>
@@ -96,14 +115,106 @@
 </div>
 
 <script>
-    // 💡 본인의 Supabase URL과 Anon Key를 아래에 넣어주세요
-    const SUPABASE_URL = 'https://본인프로젝트ID.supabase.co';
-    const SUPABASE_ANON_KEY = '본인의_ANON_PUBLIC_키';
+    // 💡 Supabase 설정 (login.html에 있던 올바른 정보 적용)
+    const SUPABASE_URL = 'https://kxncijvjruixwiqpnnwo.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt4bmNpanZqcnVpeHdpcXBubndvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc4NTQzMDksImV4cCI6MjEwMzQzMDMwOX0.V6Y6rYo5g6y7PqKYSRTpLcNC8BnGg_HMCZV2UC7d104';
 
     const { createClient } = supabase;
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Supabase에 데이터 저장하는 함수
+    // 페이지 로드 시 세션 확인 및 인증 상태 리스너 등록
+    window.onload = async () => {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            updateAuthUI(session.user);
+        }
+
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                updateAuthUI(session.user);
+            } else {
+                resetAuthUI();
+            }
+        });
+    };
+
+    // Google 로그인 함수
+    async function loginWithGoogle() {
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin
+            }
+        });
+        if (error) {
+            alert('로그인 오류: ' + error.message);
+        }
+    }
+
+    // 로그아웃 함수
+    async function logout() {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) {
+            alert('로그아웃 오류: ' + error.message);
+        }
+    }
+
+    // 로그인 후 UI 업데이트
+    function updateAuthUI(user) {
+        const meta = user.user_metadata;
+        const name = meta.full_name || meta.name || '사용자';
+        const html = `
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-weight: bold; color: #2c3e50;">${name}님</span>
+                <button onclick="logout()" style="padding: 3px 8px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">로그아웃</button>
+            </div>
+        `;
+        document.getElementById('auth-header-0').innerHTML = html;
+        document.getElementById('auth-header-1').innerHTML = html;
+    }
+
+    // 로그아웃 시 UI 초기화
+    function resetAuthUI() {
+        const html = `<button onclick="loginWithGoogle()" style="padding: 4px 10px; background: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer;">구글 로그인</button>`;
+        document.getElementById('auth-header-0').innerHTML = html;
+        document.getElementById('auth-header-1').innerHTML = html;
+    }
+
+    // 🎤 음성 인식 (Speech Recognition) 기능
+    let recognition = null;
+    function toggleSpeechRecognition(tabIdx) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("현재 브라우저는 음성 인식을 지원하지 않습니다. (Chrome 브라우저를 이용해주세요)");
+            return;
+        }
+
+        if (!recognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'ko-KR';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onresult = (event) => {
+                const speechResult = event.results[0][0].transcript;
+                document.getElementById(`input-${tabIdx}`).value = speechResult;
+                sendMessage(tabIdx);
+            };
+
+            recognition.onerror = (event) => {
+                console.error("음성 인식 오류:", event.error);
+                alert("음성 인식 중 오류가 발생했습니다: " + event.error);
+            };
+        }
+
+        try {
+            recognition.start();
+        } catch (e) {
+            console.log("이미 음성 인식이 실행 중입니다.");
+        }
+    }
+
+    // Supabase에 예약/배차 데이터 저장하는 함수
     async function saveBookingToSupabase(departureText, timeText) {
         const { data, error } = await supabaseClient
             .from('reservations')

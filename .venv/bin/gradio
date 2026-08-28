@@ -1,4 +1,4 @@
-#!/Users/hyunjaeyoo/dev/0827-bot-now/.venv/bin/python
+#!/Users/hyunjaeyoo/dev/0827-bot-now/.venv/bin/python3
 import sys
 from gradio.cli import cli
 if __name__ == '__main__':

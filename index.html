@@ -30,10 +30,10 @@
     <!-- 소개 영역 (기존 유지) -->
     <div class="text-center space-y-3">
       <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
-        어디로 갈까요? 원하시는 서비스를 선택하세요
+        어디로 갈까요?
       </h2>
       <p class="text-slate-600 text-base sm:text-lg">
-        버튼 클릭 한 번으로 장소 추천부터 택시 호출까지 간편하게 이용하세요.
+        장소 추천부터 택시 호출까지 간편하게!
       </p>
     </div>
 
@@ -46,7 +46,7 @@
           </div>
           <h3 class="text-xl font-bold text-slate-900 mb-2">AI 챗봇과 대화하기</h3>
           <p class="text-slate-600 text-sm leading-relaxed">
-            자연어로 편하게 말씀하세요. AI가 장소를 추천하고 택시 배차까지 완벽하게 연동해 드립니다. (음성 인식 지원)
+            편하게 말씀하세요. AI가 장소를 추천하고 택시 배차까지 완벽하게 연동해 드립니다. (음성 인식 지원)
           </p>
         </div>
         <div class="mt-6 flex items-center text-blue-600 font-semibold text-sm gap-1 group-hover:translate-x-1 transition">
@@ -61,7 +61,7 @@
           </div>
           <h3 class="text-xl font-bold text-slate-900 mb-2">서비스 시퀀스 흐름도</h3>
           <p class="text-slate-600 text-sm leading-relaxed">
-            사용자, 어시스턴트, Context, Memory, 외부 서비스 간의 상호작용 흐름을 다이어그램으로 확인합니다.
+            플로우 다이어그램으로 확인합니다.
           </p>
         </div>
         <div class="mt-6 flex items-center text-slate-900 font-semibold text-sm gap-1 group-hover:translate-x-1 transition">
@@ -76,7 +76,7 @@
         <div>
           <h3 class="text-xl font-extrabold text-slate-900">장소 · 택시 · 예약 접수</h3>
           <p class="text-slate-600 text-sm mt-1">
-            흐름도 기준으로, 장소 선택 → 택시 호출에 목적지 자동 반영까지 한 번에 처리합니다.
+            장소 선택 → 택시 호출에 목적지 자동 반영까지 한 번에 처리합니다.
           </p>
         </div>
 
@@ -115,7 +115,6 @@
             <input id="placeQuery" type="text" placeholder="예: 퇴근 후 갈 만한 조용한 장소 추천해줘"
               class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
             <p class="mt-2 text-xs text-slate-500">
-              흐름도 전반부처럼 “장소 추천 요청 생성 → 추천 결과 안내 → 2번째 장소 선택” 흐름을 폼으로 축약한 버전입니다.
             </p>
           </div>
 
@@ -158,9 +157,9 @@
         <div id="placeDemoResult" class="mt-4 hidden bg-white border border-slate-200 rounded-2xl p-4">
           <p class="text-sm font-bold text-slate-900">추천 결과(데모)</p>
           <ol class="mt-2 text-sm text-slate-700 list-decimal pl-5 space-y-1">
-            <li>북카페 A (조용함)</li>
-            <li>리버뷰 라운지 B (야경)</li>
-            <li>한적한 산책로 C (자연)</li>
+            <li>스타벅스 (북적북적)</li>
+            <li>남산타워 (야경)</li>
+            <li>청계천 (자연)</li>
           </ol>
           <p class="mt-2 text-xs text-slate-500">예시: “두 번째 장소 선택”을 가정해 자동 채움 버튼을 눌러보세요.</p>
           <button type="button" id="btnPickSecond"
@@ -181,13 +180,13 @@
               <option value="reserve">예약 호출</option>
             </select>
             <p class="mt-2 text-xs text-slate-500">
-              흐름도에서 “현재 위치에서 바로 호출할까요?” → “출발지·목적지·호출 방식 확정” 단계를 반영했습니다. 
+              흐름도에서 “현재 위치에서 바로 호출할까요?” 
             </p>
           </div>
 
           <div>
             <label class="text-sm font-bold text-slate-900">출발지</label>
-            <input id="pickup" type="text" placeholder="예: 현재 위치 / 충무로역"
+            <input id="pickup" type="text" placeholder="예: 현재 위치 / 을지로입구역"
               class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100" />
           </div>
 
@@ -209,8 +208,8 @@
               class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-blue-100">
               <option value="dontcare">상관없음</option>
               <option value="normal">일반</option>
-              <option value="deluxe">고급</option>
-              <option value="eco">에코</option>
+              <option value="deluxe">모범</option>
+              <option value="eco">스타리아</option>
             </select>
           </div>
 
@@ -306,8 +305,10 @@
 
   <!-- Footer (기존 유지) -->
   <footer class="w-full max-w-4xl text-center text-xs text-slate-500 py-4 border-t border-slate-200">
-    <p>&copy;🚕 한번에 택시</p>
-  </footer>
+    <p>&copy;(주)한번에 택시
+        <p class="w-full max-w-4xl text-center text-xs text-slate-500 py-4 border-slate-200">대표이사 유현재
+    </p>
+
 
   <script>
     // ---- 탭/토글 로직 ----
